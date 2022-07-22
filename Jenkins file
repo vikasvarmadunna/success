@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    parameters {
+    choice choices: ['DEVELOPMENT', 'STAGING' , 'PRODUCTION'], 
+    description: 'SELECT AN ENVIRONMENT FOR DEPLOYMENT.', 
+    name: 'ENVIRONMENT'
+    
+    password defaultValue: '123ABC',
+    description: 'ENTER THE API KEY.', 
+    name: 'API_KEY'
+    
+    text defaultValue: 'THIS IS THE CHAIN LOG', 
+    description: 'ENTER THE CHANGE LOG.',
+    name: 'CHANGE_LOG'
+}
+
+    stages {
+        stage('Test') {
+            steps {
+                echo "This step tests the project"
+            }
+        }
+        stage('Deploy') {
+            when { 
+                expression { params.ENVIRONMENT == "PRODUCTION" }
+                
+            }
+            steps {
+                echo "This stage deploys the project"
+            }
+        }  
+        
+        stage('Report') {
+            steps {
+                echo "This stage generates a report"
+                sh "printf \"${params.CHANGELOG}\" > ${params.ENVIRONMENT}.txt"
+                archiveArtifacts allowEmptyArchive: true,
+                    artifacts: '*.txt',
+                    fingerprint: true,
+                    followSymlinks: false,
+                    onlyIfSuccessful: true
+            }
+        }
+}
+}
